@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Generated Response</h1>
+        <div class="result">
+            <!-- Use the 'safe' filter to render HTML content -->
+            <div class="response-content">{{ response|safe }}</div>
+        </div>
+        <a href="{% url 'upload_image' %}">Upload another image</a>
+    </div>
+</body>
+</html>

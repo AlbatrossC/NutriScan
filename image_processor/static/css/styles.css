@@ -1,0 +1,45 @@
+.result {
+    text-align: center;
+    padding: 20px;
+    font-size: 18px;
+    color: #555;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.response-content {
+    text-align: left;
+    margin: 0 auto;
+    max-width: 800px;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.response-content p {
+    margin: 10px 0;
+}
+
+.response-content h2 {
+    color: #333;
+}
+
+.response-content ul {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+.response-content li {
+    margin-bottom: 10px;
+}
+
+a {
+    text-decoration: none;
+    color: #007bff;
+    font-size: 18px;
+}
+
+a:hover {
+    text-decoration: underline;
+}
