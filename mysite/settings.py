@@ -33,13 +33,8 @@ ALLOWED_HOSTS = ["*"]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# settings.py
-from decouple import config
-
-API_KEY = config('API_KEY')
-
-
-
+# Directly setting the API key
+API_KEY = 'AIzaSyB9-5w1hdLZK-SSpJqRHkDXKMraVnlwPEA'
 
 # Application definition
 

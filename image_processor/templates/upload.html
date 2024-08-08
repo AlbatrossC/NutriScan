@@ -1,20 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    {% load static %}  <!-- Add this line -->
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload Image</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Upload an Image</h1>
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Upload</button>
-        </form>
+    <header>
+        <nav>
+            <div class="logo">
+                <img src="{% static 'images/logo.png' %}" alt="Logo">
+            </div>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/upload/">Scan Ingredient</a></li>
+                <li><a href="/about/">About Us</a></li>
+                <li><a href="/contact/">Contact Us</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="hero">
+        <h1 class="site-name">NutriScan</h1>
+        <h1>Scan Your Ingredients for Nutritional Info</h1>
+        <p>Upload an image of the ingredients list and get detailed nutritional information instantly. Make informed choices about your food with our ingredient scanning tool.</p>
+        <div class="hero-buttons">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.image }}
+                <button class="btn primary" type="submit"><i class="fas fa-upload"></i> Upload Image</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>
