@@ -11,7 +11,7 @@
     <div class="container">
         <header>
             <nav>
-                <a href="{% url 'upload_image' %}" class="logo"><img src="{% static 'static\css\images\logo.png' %}" alt="Logo"></a>
+                <a href="{% url 'upload_image' %}" class="logo"><img src="{% static 'static/css/images/logo.png' %}" alt="NutriScan Logo"></a>
                 <ul>
                     <li><a href="{% url 'upload_image' %}">Upload Another Image</a></li>
                 </ul>
@@ -23,7 +23,7 @@
                 <!-- Render the formatted response with HTML content -->
                 <div class="response-content">{{ response|safe }}</div>
             </div>
-            <a href="{% url 'upload_image' %}" class="btn btn-primary">Upload Another Image</a>
+            <a href="{% url 'upload_image' %}" class="btn btn-primary"><i class="fas fa-redo-alt"></i> Upload Another Image</a>
         </main>
     </div>
 </body>
