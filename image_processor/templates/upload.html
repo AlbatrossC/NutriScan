@@ -12,7 +12,7 @@
     <header>
         <nav>
             <div class="logo">
-                <img src="{% static 'image_processor/static/css/images/logo.png' %}" alt="NutriScan Logo">
+                <img src="{% static 'css/images/logo.png' %}" alt="NutriScan Logo">
             </div>
             <ul>
                 <li><a href="/">Home</a></li>
@@ -24,8 +24,8 @@
     </header>
     <div class="hero">
         <h1 class="site-name">NutriScan</h1>
-        <h2>Scan Your Ingredients for Nutritional Info</h2>
-        <p>Upload an image of the ingredients list and get detailed nutritional information instantly.</p>
+        <h1>Scan Your Ingredients for Nutritional Info</h1>
+        <p>Upload an image of the ingredients list and get detailed nutritional information instantly. Make informed choices about your food with our ingredient scanning tool.</p>
         <div class="hero-buttons">
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
