@@ -34,7 +34,10 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Directly setting the API key
-API_KEY = 'AIzaSyB9-5w1hdLZK-SSpJqRHkDXKMraVnlwPEA'
+#swiTCH TO GEMINI API KEY INCASE OF GORQ ERROR
+#API_KEY = 'AIzaSyB9-5w1hdLZK-SSpJqRHkDXKMraVnlwPEA'
+
+API_KEY = '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'
 
 # Application definition
 

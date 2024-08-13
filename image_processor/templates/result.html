@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     {% load static %}
+    {% load custom_filters %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Result</title>
@@ -21,7 +22,8 @@
         <main>
             <h1>Generated Response</h1>
             <div class="result">
-                <div class="response-content">{{ response|safe }}</div>
+                <!-- Apply the custom filter 'format_response' to handle titles, formatting, and tables -->
+                <div class="response-content">{{ response|format_response|safe }}</div>
             </div>
             <a href="{% url 'upload_image' %}" class="btn btn-primary">Upload Another Image</a>
         </main>
