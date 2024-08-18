@@ -4,7 +4,7 @@
     {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Image</title>
+    <title>NutriScan</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script>
@@ -12,6 +12,23 @@
             const output = document.getElementById('image-preview');
             output.src = URL.createObjectURL(event.target.files[0]);
             output.style.display = 'block';
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.menu-icon') && !event.target.matches('.menu-icon *')) {
+                const menus = document.getElementsByClassName("menu-list");
+                for (let i = 0; i < menus.length; i++) {
+                    const openMenu = menus[i];
+                    if (openMenu.classList.contains('show')) {
+                        openMenu.classList.remove('show');
+                    }
+                }
+            }
         }
     </script>
 </head>
@@ -21,7 +38,10 @@
             <div class="logo">
                 <img src="{% static 'css/images/logo.png' %}" alt="NutriScan Logo">
             </div>
-            <ul>
+            <div class="menu-icon" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </div>
+            <ul id="menu" class="menu-list">
                 <li><a href="/">Home</a></li>
                 <li><a href="/upload/">Scan Ingredient</a></li>
                 <li><a href="/about/">About Us</a></li>
@@ -36,10 +56,11 @@
         <div class="hero-buttons">
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                {{ form.image }}
+                <div class="file-upload-wrapper">
+                    {{ form.image }}
+                </div>
                 <button class="btn primary" type="submit"><i class="fas fa-upload"></i> Upload Image</button>
             </form>
-            <!-- Image preview section -->
             <img id="image-preview" src="" alt="Image Preview" style="display:none; margin-top: 20px; max-width: 100%; height: auto;">
         </div>
     </div>
