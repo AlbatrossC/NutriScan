@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingredient Analysis Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #f1f4ff;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --warning: #f59e0b;
+            --warning-light: #fffbeb;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --card-bg: #ffffff;
+            --body-bg: #f9fafb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--body-bg);
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            width: 100%;
+        }
+
+        .header {
+            margin-bottom: 1.5rem;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 500;
+            transition: all 0.2s;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            background-color: var(--primary-light);
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .back-button:hover {
+            background-color: rgba(67, 97, 238, 0.2);
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 1rem 0 1.5rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-icon {
+            font-size: 1rem;
+            width: 1.75rem;
+            height: 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        /* Safety Score Styles */
+        .safety-score-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .safety-score {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .safety-score-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .safety-score-circle-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--score-color) 0deg, 
+                var(--score-color) calc(var(--score-percent) * 3.6deg), 
+                #e5e7eb calc(var(--score-percent) * 3.6deg), 
+                #e5e7eb 360deg
+            );
+        }
+
+        .safety-score-circle-inner {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .safety-score-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--score-color);
+        }
+
+        .safety-score-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: -5px;
+        }
+
+        .safety-details {
+            text-align: center;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Diet Grid Styles */
+        .diet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .diet-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            text-align: center;
+        }
+
+        .diet-icon {
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 0.875rem;
+        }
+
+        .diet-yes {
+            background-color: var(--success-light);
+        }
+
+        .diet-yes .diet-icon {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .diet-no {
+            background-color: var(--danger-light);
+        }
+
+        .diet-no .diet-icon {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .diet-maybe {
+            background-color: var(--warning-light);
+        }
+
+        .diet-maybe .diet-icon {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .diet-label {
+            font-weight: 500;
+        }
+
+        .diet-notes {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background-color: var(--primary-light);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Allergen Styles */
+        .allergen-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .allergen-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.875rem;
+            background-color: var(--danger-light);
+            color: var(--danger);
+            border-radius: 2rem;
+            font-size: 0.8125rem;
+            font-weight: 500;
+        }
+
+        /* Warning List Styles */
+        .warning-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .warning-item {
+            padding: 0.875rem;
+            border-radius: 0.5rem;
+            background-color: var(--danger-light);
+            border-left: 3px solid var(--danger);
+            font-size: 0.875rem;
+        }
+
+        .warning-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+        }
+
+        .warning-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .severity {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.125rem 0.5rem;
+            border-radius: 2rem;
+        }
+
+        .severity-high {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .severity-medium {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .severity-low {
+            background-color: #f3f4f6;
+            color: var(--text-secondary);
+        }
+
+        /* Improved Ingredient List Styles */
+        .ingredient-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .ingredient-card {
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .ingredient-name {
+            font-weight: 600;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ingredient-purpose {
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+            line-height: 1.4;
+        }
+
+        .ingredient-safety {
+            margin-top: 0.5rem;
+            font-size: 0.8125rem;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            background-color: var(--warning-light);
+            color: var(--warning);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .ingredient-safety i {
+            margin-top: 0.1rem;
+        }
+
+        /* Recommendation Styles */
+        .recommendation-section {
+            margin-top: 1rem;
+            padding: 0.875rem;
+            border-radius: 0.5rem;
+            background-color: var(--primary-light);
+        }
+
+        .recommendation-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Footer Styles */
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Utility Classes */
+        .text-sm {
+            font-size: 0.875rem;
+        }
+
+        .text-xs {
+            font-size: 0.8125rem;
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .mt-2 {
+            margin-top: 0.5rem;
+        }
+
+        .mb-3 {
+            margin-bottom: 1rem;
+        }
+
+        .mt-3 {
+            margin-top: 1rem;
+        }
+
+        .grid-2-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                padding: 1.25rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .grid-2-col {
+                grid-template-columns: 1fr;
+            }
+            
+            .ingredient-container {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .diet-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                padding: 0.75rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .ingredient-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .diet-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="{{ url_for('upload_file') }}" class="back-button">
+                <i class="fas fa-arrow-left"></i> Analyze Another
+            </a>
+        </div>
+
+        <h1>Product Analysis Results</h1>
+        
+        <div class="card-grid">
+            <!-- Safety Rating -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h2 class="card-title">Safety Rating</h2>
+                </div>
+                
+                <div class="card-body">
+                    <div class="safety-score-container">
+                        {% set score = result.safety_rating.score %}
+                        {% set score_percent = (score / 10) * 100 %}
+                        {% set score_color = "#ef4444" %}
+                        {% if score >= 7 %}
+                            {% set score_color = "#10b981" %}
+                        {% elif score >= 4 %}
+                            {% set score_color = "#f59e0b" %}
+                        {% endif %}
+                        
+                        <div class="safety-score">
+                            <div class="safety-score-circle">
+                                <div class="safety-score-circle-bg" style="--score-percent: {{ score_percent }}; --score-color: {{ score_color }}"></div>
+                                <div class="safety-score-circle-inner">
+                                    <span class="safety-score-number" style="color: {{ score_color }}">{{ score }}</span>
+                                    <span class="safety-score-text">out of 10</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="safety-details text-sm">
+                            {{ result.safety_rating.summary }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Overview -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h2 class="card-title">Product Overview</h2>
+                </div>
+                <div class="card-body text-sm">
+                    {{ result.quick_overview }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Diet Suitability -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <h2 class="card-title">Diet Suitability</h2>
+            </div>
+            
+            <div class="card-body">
+                <div class="diet-grid">
+                    <div class="diet-item {% if result.diet_suitability.vegan == 'Yes' %}diet-yes{% elif result.diet_suitability.vegan == 'No' %}diet-no{% else %}diet-maybe{% endif %}">
+                        <div class="diet-icon">
+                            {% if result.diet_suitability.vegan == 'Yes' %}
+                                <i class="fas fa-check"></i>
+                            {% elif result.diet_suitability.vegan == 'No' %}
+                                <i class="fas fa-times"></i>
+                            {% else %}
+                                <i class="fas fa-question"></i>
+                            {% endif %}
+                        </div>
+                        <div class="diet-label">Vegan</div>
+                        <div>{{ result.diet_suitability.vegan }}</div>
+                    </div>
+                    
+                    <div class="diet-item {% if result.diet_suitability.vegetarian == 'Yes' %}diet-yes{% elif result.diet_suitability.vegetarian == 'No' %}diet-no{% else %}diet-maybe{% endif %}">
+                        <div class="diet-icon">
+                            {% if result.diet_suitability.vegetarian == 'Yes' %}
+                                <i class="fas fa-check"></i>
+                            {% elif result.diet_suitability.vegetarian == 'No' %}
+                                <i class="fas fa-times"></i>
+                            {% else %}
+                                <i class="fas fa-question"></i>
+                            {% endif %}
+                        </div>
+                        <div class="diet-label">Vegetarian</div>
+                        <div>{{ result.diet_suitability.vegetarian }}</div>
+                    </div>
+                    
+                    <div class="diet-item {% if result.diet_suitability.keto == 'Yes' %}diet-yes{% elif result.diet_suitability.keto == 'No' %}diet-no{% else %}diet-maybe{% endif %}">
+                        <div class="diet-icon">
+                            {% if result.diet_suitability.keto == 'Yes' %}
+                                <i class="fas fa-check"></i>
+                            {% elif result.diet_suitability.keto == 'No' %}
+                                <i class="fas fa-times"></i>
+                            {% else %}
+                                <i class="fas fa-question"></i>
+                            {% endif %}
+                        </div>
+                        <div class="diet-label">Keto</div>
+                        <div>{{ result.diet_suitability.keto }}</div>
+                    </div>
+                    
+                    <div class="diet-item {% if result.diet_suitability.diabetic_friendly == 'Yes' %}diet-yes{% elif result.diet_suitability.diabetic_friendly == 'No' %}diet-no{% else %}diet-maybe{% endif %}">
+                        <div class="diet-icon">
+                            {% if result.diet_suitability.diabetic_friendly == 'Yes' %}
+                                <i class="fas fa-check"></i>
+                            {% elif result.diet_suitability.diabetic_friendly == 'No' %}
+                                <i class="fas fa-times"></i>
+                            {% else %}
+                                <i class="fas fa-question"></i>
+                            {% endif %}
+                        </div>
+                        <div class="diet-label">Diabetic</div>
+                        <div>{{ result.diet_suitability.diabetic_friendly }}</div>
+                    </div>
+                    
+                    <div class="diet-item {% if result.diet_suitability.gluten_free == 'Yes' %}diet-yes{% elif result.diet_suitability.gluten_free == 'No' %}diet-no{% else %}diet-maybe{% endif %}">
+                        <div class="diet-icon">
+                            {% if result.diet_suitability.gluten_free == 'Yes' %}
+                                <i class="fas fa-check"></i>
+                            {% elif result.diet_suitability.gluten_free == 'No' %}
+                                <i class="fas fa-times"></i>
+                            {% else %}
+                                <i class="fas fa-question"></i>
+                            {% endif %}
+                        </div>
+                        <div class="diet-label">Gluten Free</div>
+                        <div>{{ result.diet_suitability.gluten_free }}</div>
+                    </div>
+                </div>
+                
+                {% if result.diet_suitability.details %}
+                    <div class="diet-notes text-sm mt-3">
+                        <strong><i class="fas fa-clipboard-list"></i> Notes:</strong> {{ result.diet_suitability.details }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Allergen Warnings -->
+        {% if result.allergen_warning and result.allergen_warning|length > 0 %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2 class="card-title">Allergen Warnings</h2>
+            </div>
+            
+            <div class="card-body">
+                <div class="allergen-container">
+                    {% for allergen in result.allergen_warning %}
+                        <span class="allergen-item">
+                            <i class="fas fa-allergies"></i> {{ allergen }}
+                        </span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Harmful Ingredients -->
+        {% if result.harmful_ingredients and result.harmful_ingredients|length > 0 %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-radiation"></i>
+                </div>
+                <h2 class="card-title">Potentially Harmful</h2>
+            </div>
+            
+            <div class="card-body">
+                <div class="warning-list">
+                    {% for ingredient in result.harmful_ingredients %}
+                        <div class="warning-item">
+                            <div class="warning-header">
+                                <span class="warning-name">{{ ingredient.name }}</span>
+                                <span class="severity severity-{{ ingredient.severity|lower }}">{{ ingredient.severity }}</span>
+                            </div>
+                            <p class="text-sm">{{ ingredient.concern }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Two-column layout for ingredients -->
+        <div class="grid-2-col mb-3">
+            <!-- Ingredient Breakdown -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <h2 class="card-title">Ingredient Breakdown</h2>
+                </div>
+                
+                <div class="card-body">
+                    <div class="ingredient-container">
+                        {% for item in result.ingredient_breakdown %}
+                            <div class="ingredient-card">
+                                <div class="ingredient-name">
+                                    <i class="fas fa-circle" style="font-size: 0.5rem; color: var(--text-secondary);"></i>
+                                    {{ item.ingredient }}
+                                </div>
+                                <div class="ingredient-purpose">{{ item.purpose }}</div>
+                                {% if item.safety_note %}
+                                    <div class="ingredient-safety">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <span>{{ item.safety_note }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Clean Ingredient List -->
+            {% if result.clean_ingredient_list and result.clean_ingredient_list|length > 0 %}
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <h2 class="card-title">Simplified Ingredients</h2>
+                </div>
+                
+                <div class="card-body">
+                    <div class="ingredient-container">
+                        {% for ingredient in result.clean_ingredient_list %}
+                            <div class="ingredient-card">
+                                <div class="ingredient-name">
+                                    <i class="fas fa-circle" style="font-size: 0.5rem; color: var(--text-secondary);"></i>
+                                    {{ ingredient }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Recommendations -->
+        {% if result.recommendations %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <h2 class="card-title">Recommendations</h2>
+            </div>
+            
+            <div class="card-body">
+                {% if result.recommendations.healthier_alternatives %}
+                    <div class="recommendation-section">
+                        <h3 class="recommendation-title"><i class="fas fa-exchange-alt"></i> Healthier Alternatives</h3>
+                        <p class="text-sm">{{ result.recommendations.healthier_alternatives }}</p>
+                    </div>
+                {% endif %}
+                
+                {% if result.recommendations.consumption_tips %}
+                    <div class="recommendation-section">
+                        <h3 class="recommendation-title"><i class="fas fa-hand-point-right"></i> Consumption Tips</h3>
+                        <p class="text-sm">{{ result.recommendations.consumption_tips }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Nutritional Highlights -->
+        {% if result.nutritional_highlights %}
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <h2 class="card-title">Nutritional Highlights</h2>
+            </div>
+            <div class="card-body text-sm">
+                {{ result.nutritional_highlights }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add smooth animations to cards
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(10px)';
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50 * index);
+            });
+        });
+    </script>
+</body>
+</html>
