@@ -1,8 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
 from PIL import Image, ImageEnhance, ImageFilter
-import easyocr  # Using EasyOCR instead of pytesseract
-import numpy as np  # Added for converting PIL Image to NumPy array
+import pytesseract
 import os
 import logging
 from dotenv import load_dotenv
@@ -30,9 +29,6 @@ logger = logging.getLogger(__name__)
 
 # Initialize Groq client
 client = Groq(api_key=app.config['GROQ_API_KEY'])
-
-# Initialize EasyOCR reader (English language, GPU optional)
-reader = easyocr.Reader(['en'], gpu=False)  # Set gpu=True if you have a compatible GPU
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -216,11 +212,8 @@ def upload_file():
 
         try:
             processed_img = process_image(filepath)
-            # Convert PIL Image to NumPy array for EasyOCR
-            processed_img_np = np.array(processed_img)
-            # Use EasyOCR to extract text from the processed image
-            result = reader.readtext(processed_img_np, detail=0)  # detail=0 returns only text
-            extracted_text = " ".join(result)  # Combine all detected text into a single string
+            # Use pytesseract to extract text directly from the processed PIL image
+            extracted_text = pytesseract.image_to_string(processed_img, lang='eng')
 
             # Print the extracted text to the terminal
             print("Extracted Text from OCR:", extracted_text)

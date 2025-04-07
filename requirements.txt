@@ -1,8 +1,7 @@
 Flask
 Werkzeug
 Pillow
-easyocr
-numpy
+pytesseract
 python-dotenv
 groq
 gunicorn
