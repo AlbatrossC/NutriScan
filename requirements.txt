@@ -1,6 +1,8 @@
-Flask==2.3.2
-gunicorn==21.2.0
-Pillow==10.0.1
-pytesseract==0.3.10
-python-dotenv==1.0.0
+Flask
+Werkzeug
+Pillow
+easyocr
+numpy
+python-dotenv
 groq
+gunicorn

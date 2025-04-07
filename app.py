@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
 from PIL import Image, ImageEnhance, ImageFilter
-import pytesseract as tess
+import easyocr  # Using EasyOCR instead of pytesseract
+import numpy as np  # Added for converting PIL Image to NumPy array
 import os
 import logging
 from dotenv import load_dotenv
@@ -30,11 +31,8 @@ logger = logging.getLogger(__name__)
 # Initialize Groq client
 client = Groq(api_key=app.config['GROQ_API_KEY'])
 
-# Configure Tesseract path
-if os.name == 'nt':
-    tess.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
-else:
-    tess.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+# Initialize EasyOCR reader (English language, GPU optional)
+reader = easyocr.Reader(['en'], gpu=False)  # Set gpu=True if you have a compatible GPU
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -168,7 +166,6 @@ def analyze_with_groq(text):
         ]
     }
 
-
     system_instruction = f"""
     You are a food ingredients expert. You will be given a text string containing food ingredients. Your task is to analyze these ingredients and provide a structured JSON response according to the following schema:
 
@@ -219,7 +216,16 @@ def upload_file():
 
         try:
             processed_img = process_image(filepath)
-            extracted_text = tess.image_to_string(processed_img)
+            # Convert PIL Image to NumPy array for EasyOCR
+            processed_img_np = np.array(processed_img)
+            # Use EasyOCR to extract text from the processed image
+            result = reader.readtext(processed_img_np, detail=0)  # detail=0 returns only text
+            extracted_text = " ".join(result)  # Combine all detected text into a single string
+
+            # Print the extracted text to the terminal
+            print("Extracted Text from OCR:", extracted_text)
+            # Alternatively, use logging:
+            # logger.info(f"Extracted Text from OCR: {extracted_text}")
 
             if not extracted_text.strip():
                 flash('No text could be extracted from the image. Please try another image.')
