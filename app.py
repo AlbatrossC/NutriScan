@@ -210,34 +210,27 @@ def upload_file():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
 
-        try:
-            processed_img = process_image(filepath)
-            # Use pytesseract to extract text directly from the processed PIL image
-            extracted_text = pytesseract.image_to_string(processed_img, lang='eng')
+            try:
+                processed_img = process_image(filepath)
+                extracted_text = pytesseract.image_to_string(processed_img, lang='eng')
 
-            # Print the extracted text to the terminal
-            print("Extracted Text from OCR:", extracted_text)
-            # Alternatively, use logging:
-            # logger.info(f"Extracted Text from OCR: {extracted_text}")
+                print("Extracted Text from OCR:", extracted_text)
 
-            if not extracted_text.strip():
-                flash('No text could be extracted from the image. Please try another image.')
+                if not extracted_text.strip():
+                    flash('No text could be extracted from the image. Please try another image.')
+                    return redirect(request.url)
+
+                analysis_result = analyze_with_groq(extracted_text)
+                session['analysis_result'] = analysis_result
+                return redirect(url_for('show_result'))
+
+            except Exception as e:
+                logger.error(f"Error processing file: {e}")
+                flash('Error processing your file. Please try again.')
                 return redirect(request.url)
-
-            analysis_result = analyze_with_groq(extracted_text)
-
-            # Store result in session and redirect
-            session['analysis_result'] = analysis_result
-            return redirect(url_for('show_result'))
-
-        except Exception as e:
-            logger.error(f"Error processing file: {e}")
-            flash('Error processing your file. Please try again.')
-            return redirect(request.url)
-        finally:
-            # Clean up the uploaded file
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            finally:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
 
     return render_template('upload.html')
 
