@@ -167,30 +167,52 @@ def analyze_with_groq(text):
 
     {json.dumps(response_schema)}
 
-    If the input is not food-related, return: {{"error": "Not food-related"}}.
-
-    If you cannot confidently analyze the ingredients due to illegibility or lack of information, return: {{"error": "Unable to analyze"}}.
-
-    Otherwise, *always* return a valid JSON object that conforms to the schema.
+    Important guidelines:
+    1. Your response MUST be valid JSON that strictly follows the provided schema.
+    2. If the input is not food-related, return: {{"error": "Not food-related"}}.
+    3. If you cannot analyze the ingredients, return: {{"error": "Unable to analyze"}}.
+    4. Do not include any markdown formatting or code blocks in your response.
+    5. Only return the raw JSON object, nothing else.
     """
 
     try:
+        logger.info("Sending request to Groq API...")
+        logger.debug(f"Request text: {text[:200]}...") 
+        
         completion = client.chat.completions.create(
-            model="qwen-2.5-32b",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": text}
             ],
             temperature=0.6,
             max_tokens=4096,
-            top_p=0.95
+            top_p=0.95,
+            response_format={"type": "json_object"}
         )
         
         response_text = completion.choices[0].message.content
-        return json.loads(response_text)
+        logger.info("Received response from Groq API")
+        logger.debug(f"Raw response: {response_text}")
+        
+        # Try to parse the response
+        try:
+            response_data = json.loads(response_text)
+            if not isinstance(response_data, dict):
+                raise ValueError("Response is not a JSON object")
+            return response_data
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON response: {e}")
+            logger.error(f"Response content: {response_text}")
+            raise RuntimeError("Invalid JSON response from API")
+        except ValueError as e:
+            logger.error(f"Invalid response format: {e}")
+            logger.error(f"Response content: {response_text}")
+            raise RuntimeError("Invalid response format from API")
+            
     except Exception as e:
-        logger.error(f"Groq API error: {e}")
-        raise RuntimeError("Failed to analyze ingredients with Groq")
+        logger.error(f"Groq API error: {str(e)}")
+        raise RuntimeError(f"Failed to analyze ingredients: {str(e)}")
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
@@ -214,23 +236,38 @@ def upload_file():
                 processed_img = process_image(filepath)
                 extracted_text = pytesseract.image_to_string(processed_img, lang='eng')
 
-                print("Extracted Text from OCR:", extracted_text)
+                logger.info(f"Extracted Text from OCR: {extracted_text[:200]}...")
 
                 if not extracted_text.strip():
                     flash('No text could be extracted from the image. Please try another image.')
                     return redirect(request.url)
 
-                analysis_result = analyze_with_groq(extracted_text)
-                session['analysis_result'] = analysis_result
-                return redirect(url_for('show_result'))
+                try:
+                    analysis_result = analyze_with_groq(extracted_text)
+                    if 'error' in analysis_result:
+                        flash(f"Analysis error: {analysis_result['error']}")
+                        return redirect(request.url)
+                    
+                    session['analysis_result'] = analysis_result
+                    return redirect(url_for('show_result'))
+                except RuntimeError as e:
+                    flash(f"Analysis failed: {str(e)}")
+                    return redirect(request.url)
+                except Exception as e:
+                    logger.error(f"Unexpected analysis error: {str(e)}")
+                    flash('An unexpected error occurred during analysis. Please try again.')
+                    return redirect(request.url)
 
             except Exception as e:
-                logger.error(f"Error processing file: {e}")
+                logger.error(f"Error processing file: {str(e)}")
                 flash('Error processing your file. Please try again.')
                 return redirect(request.url)
             finally:
                 if os.path.exists(filepath):
                     os.remove(filepath)
+        else:
+            flash('Allowed file types are png, jpg, jpeg, gif, webp')
+            return redirect(request.url)
 
     return render_template('upload.html')
 
