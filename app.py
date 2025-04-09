@@ -1,12 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
 from PIL import Image, ImageEnhance, ImageFilter
-import pytesseract
 import os
 import logging
 from dotenv import load_dotenv
 import json
 from groq import Groq
+import requests
+from io import BytesIO
 
 load_dotenv()
 
@@ -17,14 +18,18 @@ app = Flask(__name__)
 app.config.update({
     'SECRET_KEY': os.environ.get('SECRET_KEY'),
     'GROQ_API_KEY': os.environ.get('GROQ_API_KEY'),
-    'UPLOAD_FOLDER': '/tmp',
+    'OCR_API_KEY': os.environ.get('OCR_API_KEY'),
+    'OCR_API_URL': 'https://api.ocr.space/parse/image',
     'MAX_CONTENT_LENGTH': 16 * 1024 * 1024,
     'ALLOWED_EXTENSIONS': {'png', 'jpg', 'jpeg', 'gif', 'webp'},
     'TEMPLATES_AUTO_RELOAD': True,
 })
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Initialize Groq client
@@ -33,21 +38,71 @@ client = Groq(api_key=app.config['GROQ_API_KEY'])
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-def process_image(image_path):
+def enhance_image_for_ocr(img):
+    """Enhance image quality for better OCR results"""
     try:
-        img = Image.open(image_path)
-        img = img.convert('L')  # Grayscale
+        logger.info("Enhancing image for OCR...")
+        # Convert to grayscale
+        img = img.convert('L')
+        # Increase contrast
         img = ImageEnhance.Contrast(img).enhance(2.0)
-        img = ImageEnhance.Brightness(img).enhance(1.5)
-        img = img.filter(ImageFilter.MedianFilter())
+        # Adjust brightness
+        img = ImageEnhance.Brightness(img).enhance(1.2)
+        # Apply filters
+        img = img.filter(ImageFilter.MedianFilter(size=3))
         img = img.filter(ImageFilter.SHARPEN)
         return img
     except Exception as e:
-        logger.error(f"Image processing failed: {e}")
+        logger.error(f"Image enhancement failed: {e}")
         raise
 
+def extract_text_with_ocr(image_data):
+    """Extract text using OCR.space API with enhanced image processing"""
+    try:
+        logger.info("Starting OCR process...")
+        
+        # Enhance the image first
+        img = Image.open(BytesIO(image_data))
+        enhanced_img = enhance_image_for_ocr(img)
+        
+        # Save enhanced image to BytesIO
+        img_byte_arr = BytesIO()
+        enhanced_img.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
+        
+        logger.info("Sending request to OCR.space API...")
+        response = requests.post(
+            app.config['OCR_API_URL'],
+            files={'file': ('enhanced.png', img_byte_arr, 'image/png')},
+            data={
+                'apikey': app.config['OCR_API_KEY'],
+                'language': 'eng',
+                'isOverlayRequired': False,
+                'scale': True,
+                'OCREngine': 2
+            }
+        )
+        
+        logger.info(f"OCR API response status: {response.status_code}")
+        result = response.json()
+        
+        if response.status_code != 200 or not result.get('ParsedResults'):
+            error = result.get('ErrorMessage', 'OCR failed')
+            logger.error(f"OCR error: {error}")
+            raise RuntimeError(f"OCR failed: {error}")
+            
+        extracted_text = result['ParsedResults'][0]['ParsedText']
+        logger.info(f"Extracted Text: {extracted_text}")
+        
+        return extracted_text.strip()
+    except Exception as e:
+        logger.error(f"OCR process failed: {str(e)}")
+        raise RuntimeError(f"Failed to extract text: {str(e)}")
+
 def analyze_with_groq(text):
+    """Analyze extracted text with Groq API"""
     if not text.strip():
+        logger.error("Empty text provided for analysis")
         raise ValueError("No text provided for analysis")
 
     response_schema = {
@@ -180,7 +235,7 @@ def analyze_with_groq(text):
         logger.debug(f"Request text: {text[:200]}...") 
         
         completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama3-70b-8192",
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": text}
@@ -195,7 +250,6 @@ def analyze_with_groq(text):
         logger.info("Received response from Groq API")
         logger.debug(f"Raw response: {response_text}")
         
-        # Try to parse the response
         try:
             response_data = json.loads(response_text)
             if not isinstance(response_data, dict):
@@ -228,43 +282,34 @@ def upload_file():
             return redirect(request.url)
 
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-
             try:
-                processed_img = process_image(filepath)
-                extracted_text = pytesseract.image_to_string(processed_img, lang='eng')
-
-                logger.info(f"Extracted Text from OCR: {extracted_text[:200]}...")
-
+                logger.info(f"Processing file: {file.filename}")
+                file_data = file.read()
+                
+                # OCR text extraction
+                extracted_text = extract_text_with_ocr(file_data)
+                logger.info(f"Extracted text length: {len(extracted_text)}")
+                
                 if not extracted_text.strip():
                     flash('No text could be extracted from the image. Please try another image.')
                     return redirect(request.url)
-
-                try:
-                    analysis_result = analyze_with_groq(extracted_text)
-                    if 'error' in analysis_result:
-                        flash(f"Analysis error: {analysis_result['error']}")
-                        return redirect(request.url)
-                    
-                    session['analysis_result'] = analysis_result
-                    return redirect(url_for('show_result'))
-                except RuntimeError as e:
-                    flash(f"Analysis failed: {str(e)}")
+                
+                # Groq analysis
+                analysis_result = analyze_with_groq(extracted_text)
+                if 'error' in analysis_result:
+                    flash(f"Analysis error: {analysis_result['error']}")
                     return redirect(request.url)
-                except Exception as e:
-                    logger.error(f"Unexpected analysis error: {str(e)}")
-                    flash('An unexpected error occurred during analysis. Please try again.')
-                    return redirect(request.url)
-
-            except Exception as e:
-                logger.error(f"Error processing file: {str(e)}")
-                flash('Error processing your file. Please try again.')
+                
+                session['analysis_result'] = analysis_result
+                return redirect(url_for('show_result'))
+                
+            except RuntimeError as e:
+                flash(f"Processing failed: {str(e)}")
                 return redirect(request.url)
-            finally:
-                if os.path.exists(filepath):
-                    os.remove(filepath)
+            except Exception as e:
+                logger.exception("Unexpected error during processing")
+                flash('An unexpected error occurred. Please try again.')
+                return redirect(request.url)
         else:
             flash('Allowed file types are png, jpg, jpeg, gif, webp')
             return redirect(request.url)
