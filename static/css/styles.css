@@ -1,0 +1,665 @@
+:root {
+    --win-blue: #000080;          /* Classic Windows blue */
+    --win-gray: #c0c0c0;          /* Classic Windows gray */
+    --win-darkgray: #808080;      /* Border color */
+    --win-lightgray: #d4d0c8;     /* Windows 95/98 bg color */
+    --win-white: #ffffff;         /* Window inner color */
+    --win-black: #000000;         /* Text color */
+    --win-highlight: #0000ff;     /* Hyperlink color */
+    --win-header: #000080;        /* Window title bar */
+    --win-green: #008000;         /* Added classic Windows green */
+    --win-red: #800000;           /* Added classic Windows red */
+    --border-raised: inset -1px -1px #000000, inset 1px 1px #ffffff;
+    --border-sunken: inset -1px -1px #ffffff, inset 1px 1px #808080;
+    --shadow-window: 6px 6px 0px rgba(0, 0, 0, 0.5); /* Increased shadow size */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'MS Sans Serif', 'Arial', sans-serif;
+}
+
+body {
+    background-color: var(--win-lightgray);
+    margin: 0;
+    padding: 0;
+    line-height: 1.4; /* Increased line height */
+    color: var(--win-black);
+    font-size: 16px; /* Base font size increased */
+    /* Improved desktop pattern */
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.03) 5px, rgba(0,0,0,0.03) 10px);
+    background-attachment: fixed;
+}
+
+header {
+    background-color: var(--win-header);
+    color: white;
+    padding: 6px 0; /* Increased padding */
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    border-top: 2px solid #00b4ff; /* Increased border */
+    border-bottom: 3px solid var(--win-darkgray); /* Increased border */
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 95%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 12px; /* Increased padding */
+}
+
+.logo {
+    font-size: 1.4em; /* Increased size */
+    font-weight: bold;
+    color: #fff;
+    text-decoration: none;
+    letter-spacing: 0px;
+    display: flex;
+    align-items: center;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 24px; /* Increased spacing */
+    font-size: 1.05em; /* Increased font size */
+    cursor: pointer;
+    padding: 3px 8px; /* Increased padding */
+    position: relative;
+}
+
+nav a:hover {
+    text-decoration: underline;
+    background-color: #2a71e8;
+}
+
+.github-icon {
+    margin-left: 24px;
+    font-size: 1.3em; /* Increased size */
+    color: white;
+    display: flex;
+    align-items: center;
+}
+
+.github-icon:hover {
+    color: #aaddff;
+}
+
+.main-container {
+    display: flex;
+    width: 95%;
+    max-width: 1100px; /* Increased max width */
+    margin: 28px auto; /* Increased margin */
+    gap: 20px; /* Increased gap */
+}
+
+.left-column, .right-column {
+    background-color: var(--win-gray);
+    padding: 6px; /* Increased padding */
+    flex: 1;
+    border: 3px solid; /* Thicker border */
+    border-top-color: #ffffff;
+    border-left-color: #ffffff;
+    border-right-color: #000000;
+    border-bottom-color: #000000;
+    box-shadow: var(--shadow-window);
+    position: relative;
+}
+
+.left-column:before, .right-column:before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 24px; /* Increased title bar height */
+    background-color: var(--win-blue);
+    z-index: 1;
+}
+
+.left-column > *, .right-column > * {
+    position: relative;
+    z-index: 2;
+    margin-top: 26px; /* Adjusted for larger title bar */
+}
+
+.window-title {
+    position: absolute;
+    top: 3px; /* Adjusted position */
+    left: 8px; /* Adjusted position */
+    color: white;
+    font-weight: bold;
+    font-size: 1em; /* Increased size */
+    z-index: 2;
+}
+
+/* Added window icon */
+.window-title:before {
+    content: "📄";
+    display: inline-block;
+    margin-right: 4px;
+    font-size: 0.9em;
+}
+
+.window-content {
+    background-color: var(--win-gray);
+    margin: 0;
+    padding: 16px; /* Increased padding */
+    border: 3px solid; /* Thicker border */
+    border-top-color: #808080;
+    border-left-color: #808080;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+}
+
+h1 {
+    color: var(--win-black);
+    margin: 12px 0 20px 0; /* Increased margins */
+    font-size: 1.4em; /* Increased size */
+    font-weight: bold;
+    text-align: center;
+}
+
+p {
+    margin-bottom: 16px; /* Increased margin */
+    font-size: 1.05em; /* Increased size */
+    line-height: 1.5; /* Increased line height */
+    color: var(--win-black);
+}
+
+.form-group {
+    margin-bottom: 20px; /* Increased margin */
+    text-align: left;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px; /* Increased margin */
+    color: var(--win-black);
+    font-weight: normal;
+    font-size: 1.05em; /* Increased size */
+}
+
+input[type="file"] {
+    width: 100%;
+    padding: 10px; /* Increased padding */
+    background-color: var(--win-white);
+    border: 3px solid; /* Thicker border */
+    border-top-color: #808080;
+    border-left-color: #808080;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+    cursor: pointer;
+    font-size: 1.05em; /* Increased size */
+}
+
+.btn {
+    display: inline-block;
+    background-color: var(--win-gray);
+    color: var(--win-black);
+    text-decoration: none;
+    padding: 6px 16px; /* Increased padding */
+    border: 3px solid; /* Thicker border */
+    border-top-color: #ffffff;
+    border-left-color: #ffffff;
+    border-right-color: #000000;
+    border-bottom-color: #000000;
+    cursor: pointer;
+    font-size: 1.05em; /* Increased size */
+    font-weight: normal;
+    text-align: center;
+    margin: 8px 4px; /* Increased margins */
+    min-width: 90px; /* Added min-width for more consistent buttons */
+}
+
+.btn:active {
+    border-top-color: #000000;
+    border-left-color: #000000;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+}
+
+/* Added hover effect */
+.btn:hover {
+    background-color: #d0d0d0;
+}
+
+.image-preview-container {
+    width: 100%;
+    height: 300px; /* Increased height */
+    margin-top: 20px; /* Increased margin */
+    background-color: var(--win-white);
+    border: 3px solid; /* Thicker border */
+    border-top-color: #808080;
+    border-left-color: #808080;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+    overflow: hidden;
+    display: none;
+}
+
+#imagePreview {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+}
+
+.modal-content {
+    background-color: var(--win-gray);
+    margin: 8% auto;
+    padding: 3px; /* Increased padding */
+    width: 80%;
+    max-width: 550px; /* Increased max width */
+    position: relative;
+    border: 3px solid; /* Thicker border */
+    border-top-color: #ffffff;
+    border-left-color: #ffffff;
+    border-right-color: #000000;
+    border-bottom-color: #000000;
+    box-shadow: var(--shadow-window);
+}
+
+.modal-title-bar {
+    background-color: var(--win-blue);
+    color: white;
+    padding: 5px 4px 5px 8px; /* Increased padding */
+    font-weight: bold;
+    font-size: 1.05em; /* Increased size */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-body {
+    padding: 16px; /* Increased padding */
+    background-color: var(--win-gray);
+    border: 3px solid; /* Thicker border */
+    border-top-color: #808080;
+    border-left-color: #808080;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+}
+
+.close {
+    color: white;
+    font-size: 18px; /* Increased size */
+    font-weight: bold;
+    cursor: pointer;
+    background-color: var(--win-gray);
+    width: 20px; /* Increased size */
+    height: 18px; /* Increased size */
+    text-align: center;
+    line-height: 16px; /* Adjusted line height */
+    border: 2px solid black; /* Thicker border */
+}
+
+.close:active {
+    border-top-color: #000000;
+    border-left-color: #000000;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+}
+
+.modal h2 {
+    color: var(--win-black);
+    margin: 0 0 16px 0; /* Increased margin */
+    font-size: 1.3em; /* Increased size */
+    font-weight: bold;
+}
+
+/* Custom file input styling */
+input[type="file"]::-webkit-file-upload-button {
+    visibility: hidden;
+    width: 0;
+}
+
+input[type="file"]::before {
+    content: 'Browse...';
+    display: inline-block;
+    background: var(--win-gray);
+    border: 3px solid; /* Thicker border */
+    border-top-color: #ffffff;
+    border-left-color: #ffffff;
+    border-right-color: #000000;
+    border-bottom-color: #000000;
+    padding: 4px 12px; /* Increased padding */
+    outline: none;
+    white-space: nowrap;
+    cursor: pointer;
+    color: var(--win-black);
+    font-size: 1.05em; /* Increased size */
+}
+
+input[type="file"]:active::before {
+    border-top-color: #000000;
+    border-left-color: #000000;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+}
+
+/* Flash messages styling */
+.flash-messages {
+    margin-bottom: 20px; /* Increased margin */
+}
+
+.flash-message {
+    padding: 12px; /* Increased padding */
+    margin-bottom: 14px; /* Increased margin */
+    border: 2px solid; /* Thicker border */
+    font-size: 1.05em; /* Increased size */
+}
+
+.error {
+    background-color: #ffe0e0;
+    color: #880000;
+    border-color: #880000;
+}
+
+.success {
+    background-color: #e0ffe0;
+    color: #008800;
+    border-color: #008800;
+}
+
+.instructions {
+    background-color: #ffffcc;
+    padding: 16px; /* Increased padding */
+    border: 2px dashed #808080; /* Thicker border */
+    margin-bottom: 20px; /* Increased margin */
+    font-size: 1.05em; /* Increased size */
+}
+
+.contact-email {
+    color: var(--win-highlight);
+    text-decoration: underline;
+    font-weight: normal;
+}
+
+/* Contact modal styling */
+#contactModal ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 16px 0; /* Increased margin */
+}
+
+#contactModal li {
+    margin-bottom: 12px; /* Increased margin */
+    padding: 12px; /* Increased padding */
+    background-color: var(--win-white);
+    border: 2px solid #808080; /* Thicker border */
+    font-size: 1.05em; /* Increased size */
+}
+
+/* Progress Bar Styles */
+.progress-container {
+    display: none;
+    margin: 16px 0; /* Increased margin */
+    width: 100%;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px; /* Increased margin */
+    font-size: 0.95em; /* Increased size */
+    color: var(--win-black);
+}
+
+.progress-bg {
+    height: 20px; /* Increased height */
+    background-color: var(--win-white);
+    border: 3px solid; /* Thicker border */
+    border-top-color: #808080;
+    border-left-color: #808080;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+    position: relative;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0;
+    background: #000080;
+    position: relative;
+}
+
+/* Additional retro Windows decorations */
+.close-x {
+    position: absolute;
+    right: 8px; /* Adjusted position */
+    top: 4px; /* Adjusted position */
+    color: white;
+    font-size: 14px; /* Increased size */
+    cursor: pointer;
+    z-index: 5;
+}
+
+.window-controls {
+    position: absolute;
+    top: 4px; /* Adjusted position */
+    right: 8px; /* Adjusted position */
+    display: flex;
+    gap: 6px; /* Increased gap */
+    z-index: 5;
+}
+
+.window-button {
+    width: 18px; /* Increased size */
+    height: 18px; /* Increased size */
+    background-color: var(--win-gray);
+    border: 2px solid black; /* Thicker border */
+    font-size: 14px; /* Increased size */
+    line-height: 14px; /* Adjusted line height */
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Added Start Button styling */
+.start-button {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    background-color: var(--win-gray);
+    padding: 4px 12px;
+    border: 3px solid;
+    border-top-color: #ffffff;
+    border-left-color: #ffffff;
+    border-right-color: #000000;
+    border-bottom-color: #000000;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1.1em;
+}
+
+.start-button:before {
+    content: "🪟";
+    font-size: 1.2em;
+}
+
+/* Added taskbar */
+.taskbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 36px;
+    background-color: var(--win-gray);
+    border-top: 3px solid #ffffff;
+    display: flex;
+    align-items: center;
+    z-index: 90;
+}
+
+/* Added desktop icons */
+.desktop-icons {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 5;
+}
+
+.desktop-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.icon-img {
+    font-size: 32px;
+    margin-bottom: 6px;
+}
+
+.icon-text {
+    color: white;
+    text-shadow: 1px 1px 1px black, -1px -1px 1px black, 1px -1px 1px black, -1px 1px 1px black;
+    font-size: 0.9em;
+}
+
+/* Added clock */
+.system-clock {
+    position: fixed;
+    bottom: 8px;
+    right: 10px;
+    font-size: 0.95em;
+    background-color: var(--win-gray);
+    padding: 2px 8px;
+    border: 2px solid;
+    border-top-color: #808080;
+    border-left-color: #808080;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+    z-index: 100;
+}
+
+/* Additional Window 95/98 styled components */
+fieldset {
+    border: 2px solid;
+    border-top-color: #808080;
+    border-left-color: #808080;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+    padding: 12px;
+    margin-bottom: 20px;
+}
+
+legend {
+    padding: 0 8px;
+    font-weight: bold;
+    font-size: 1.05em;
+}
+
+/* Enhanced code & blockquote styling */
+pre, code {
+    background-color: #000080;
+    color: #ffffff;
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 1.05em;
+    border: 2px solid;
+    border-top-color: #808080;
+    border-left-color: #808080;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+    margin: 16px 0;
+}
+
+blockquote {
+    background-color: #ffffcc;
+    border-left: 6px solid #808080;
+    padding: 12px;
+    margin: 16px 0;
+    font-style: italic;
+}
+
+/* Pixel perfect adjustments for window elements */
+.left-column, .right-column {
+    min-height: 240px; /* Increased min-height */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main-container {
+        flex-direction: column;
+        gap: 24px; /* Increased gap */
+        margin: 24px auto; /* Increased margin */
+    }
+    
+    .header-container {
+        flex-direction: column;
+        text-align: center;
+        padding: 8px 0; /* Increased padding */
+    }
+    
+    nav {
+        margin-top: 10px; /* Increased margin */
+        justify-content: center;
+    }
+    
+    nav a {
+        margin: 0 10px; /* Increased margin */
+        font-size: 1em; /* Increased size */
+    }
+    
+    .left-column, .right-column {
+        padding: 4px; /* Increased padding */
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 12% auto; /* Increased margin */
+    }
+}
+
+@media (max-width: 480px) {
+    .btn {
+        width: 100%;
+        margin-bottom: 10px; /* Increased margin */
+        padding: 8px 16px; /* Increased padding */
+    }
+    
+    input[type="file"]::before {
+        padding: 6px 12px; /* Increased padding */
+        font-size: 0.95em; /* Increased size */
+    }
+    
+    .desktop-icons {
+        display: none; /* Hide desktop icons on small screens */
+    }
+}

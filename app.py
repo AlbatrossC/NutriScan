@@ -224,7 +224,7 @@ def analyze_with_groq(text):
 
     Important guidelines:
     1. Your response MUST be valid JSON that strictly follows the provided schema.
-    2. If the input is not food-related, return: {{"error": "Not food-related"}}.
+    2. If the input is not food-related, return: {{"error": "Wrong image uploaded. Please upload a ingredients image"}}.
     3. If you cannot analyze the ingredients, return: {{"error": "Unable to analyze"}}.
     4. Do not include any markdown formatting or code blocks in your response.
     5. Only return the raw JSON object, nothing else.
