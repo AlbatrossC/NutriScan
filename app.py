@@ -205,6 +205,24 @@ def analyze_with_groq(text):
                 "type": "string",
                 "description": "Key nutritional facts and their implications",
                 "maxLength": 800
+            },
+            "sugar_content": {
+                "type": "object",
+                "description": "Analysis of sugar content",
+                "properties": {
+                    "percentage": {
+                        "type": "number",
+                        "description": "Estimated sugar content as a percentage of the product (0-100)",
+                        "minimum": 0,
+                        "maximum": 100
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "2-line summary of sugar level (e.g., too high/low, safe to consume or not)",
+                        "maxLength": 300
+                    }
+                },
+                "required": ["percentage", "description"]
             }
         },
         "required": [
@@ -213,27 +231,34 @@ def analyze_with_groq(text):
             "diet_suitability",
             "allergen_warning",
             "harmful_ingredients",
-            "ingredient_breakdown"
+            "ingredient_breakdown",
+            "sugar_content"
         ]
     }
 
     system_instruction = f"""
-    You are a food ingredients expert. You will be given a text string containing food ingredients. Your task is to analyze these ingredients and provide a structured JSON response according to the following schema:
+    You are a certified food safety and nutrition expert. You'll be given a text block extracted from a packaged food label. Your task is to analyze this text and return a JSON object conforming strictly to this schema:
 
-    {json.dumps(response_schema)}
+    {json.dumps(response_schema, indent=2)}
 
-    Important guidelines:
-    1. Your response MUST be valid JSON that strictly follows the provided schema.
-    2. If the input is not food-related, return: {{"error": "Wrong image uploaded. Please upload a ingredients image"}}.
-    3. If you cannot analyze the ingredients, return: {{"error": "Unable to analyze"}}.
-    4. Do not include any markdown formatting or code blocks in your response.
-    5. Only return the raw JSON object, nothing else.
+    Important Guidelines:
+    1. Return only a valid JSON object with no markdown or explanations.
+    2. The sugar_content field must always be included, even if the sugar is not directly mentioned.
+       a. If the percentage is not explicitly available in the text, you must intelligently estimate it based on ingredients and general product knowledge.
+       b. If necessary, imagine what a similar product's sugar level would be or search from common nutritional datasets.
+       c. Value must be a number (int or float), representing percentage out of 100.
+       d. The description should summarize in 2 lines whether the sugar content is too high or too low, and whether it's recommended to consume or avoid.
+    3. If this is not a food product, respond with: {{ "error": "Wrong image uploaded. Please upload a ingredients image" }}
+    4. If unable to analyze for any reason, respond with: {{ "error": "Unable to analyze" }}
+    5. Avoid assumptions outside common food safety knowledge. Be factual and concise.
+
+    Provide only the final structured JSON object in your response.
     """
 
     try:
         logger.info("Sending request to Groq API...")
-        logger.debug(f"Request text: {text[:200]}...") 
-        
+        logger.debug(f"Request text: {text[:200]}...")
+
         completion = client.chat.completions.create(
             model="llama3-70b-8192",
             messages=[
@@ -245,11 +270,11 @@ def analyze_with_groq(text):
             top_p=0.95,
             response_format={"type": "json_object"}
         )
-        
+
         response_text = completion.choices[0].message.content
         logger.info("Received response from Groq API")
         logger.debug(f"Raw response: {response_text}")
-        
+
         try:
             response_data = json.loads(response_text)
             if not isinstance(response_data, dict):
@@ -263,10 +288,11 @@ def analyze_with_groq(text):
             logger.error(f"Invalid response format: {e}")
             logger.error(f"Response content: {response_text}")
             raise RuntimeError("Invalid response format from API")
-            
+
     except Exception as e:
         logger.error(f"Groq API error: {str(e)}")
         raise RuntimeError(f"Failed to analyze ingredients: {str(e)}")
+
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():

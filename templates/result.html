@@ -88,6 +88,12 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--border);
             overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .card-header {
@@ -191,6 +197,77 @@
             line-height: 1.5;
         }
 
+        /* Sugar Content Styles */
+        .sugar-content-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .sugar-score {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sugar-score-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sugar-score-circle-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--sugar-color) 0deg, 
+                var(--sugar-color) calc(var(--sugar-percent) * 3.6deg), 
+                #e5e7eb calc(var(--sugar-percent) * 3.6deg), 
+                #e5e7eb 360deg
+            );
+        }
+
+        .sugar-score-circle-inner {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sugar-score-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--sugar-color);
+        }
+
+        .sugar-score-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: -5px;
+        }
+
+        .sugar-details {
+            text-align: center;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
         /* Diet Grid Styles */
         .diet-grid {
             display: grid;
@@ -207,6 +284,11 @@
             border-radius: 0.5rem;
             font-size: 0.875rem;
             text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .diet-item:hover {
+            transform: scale(1.03);
         }
 
         .diet-icon {
@@ -276,6 +358,11 @@
             border-radius: 2rem;
             font-size: 0.8125rem;
             font-weight: 500;
+            transition: transform 0.2s;
+        }
+
+        .allergen-item:hover {
+            transform: translateY(-2px);
         }
 
         /* Warning List Styles */
@@ -291,6 +378,11 @@
             background-color: var(--danger-light);
             border-left: 3px solid var(--danger);
             font-size: 0.875rem;
+            transition: transform 0.2s;
+        }
+
+        .warning-item:hover {
+            transform: translateX(5px);
         }
 
         .warning-header {
@@ -341,6 +433,12 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .ingredient-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
         .ingredient-name {
@@ -380,6 +478,11 @@
             padding: 0.875rem;
             border-radius: 0.5rem;
             background-color: var(--primary-light);
+            transition: transform 0.2s;
+        }
+
+        .recommendation-section:hover {
+            transform: translateX(5px);
         }
 
         .recommendation-title {
@@ -431,6 +534,21 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
+        }
+
+        /* New Section Styles */
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 2rem 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary);
         }
 
         @media (max-width: 1200px) {
@@ -492,6 +610,7 @@
 
         <h1>Product Analysis Results</h1>
         
+        <!-- Summary Section -->
         <div class="card-grid">
             <!-- Safety Rating -->
             <div class="card">
@@ -544,13 +663,51 @@
             </div>
         </div>
         
-        <!-- Diet Suitability -->
+        <!-- Sugar Content -->
         <div class="card mb-3">
             <div class="card-header">
                 <div class="card-icon">
-                    <i class="fas fa-utensils"></i>
+                    <i class="fas fa-candy-cane"></i>
                 </div>
-                <h2 class="card-title">Diet Suitability</h2>
+                <h2 class="card-title">Sugar Content Analysis</h2>
+            </div>
+            <div class="card-body">
+                <div class="sugar-content-container">
+                    {% set sugar_percent = result.sugar_content.percentage %}
+                    {% set sugar_color = "#10b981" %}
+                    {% if sugar_percent > 20 %}
+                        {% set sugar_color = "#ef4444" %}
+                    {% elif sugar_percent > 10 %}
+                        {% set sugar_color = "#f59e0b" %}
+                    {% endif %}
+                    
+                    <div class="sugar-score">
+                        <div class="sugar-score-circle">
+                            <div class="sugar-score-circle-bg" style="--sugar-percent: {{ sugar_percent }}; --sugar-color: {{ sugar_color }}"></div>
+                            <div class="sugar-score-circle-inner">
+                                <span class="sugar-score-number" style="color: {{ sugar_color }}">{{ sugar_percent }}%</span>
+                                <span class="sugar-score-text">sugar content</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="sugar-details text-sm">
+                        {{ result.sugar_content.description }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Diet Suitability -->
+        <h2 class="section-title">
+            <i class="fas fa-utensils"></i> Diet Compatibility
+        </h2>
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <h2 class="card-title">Diet Suitability Analysis</h2>
             </div>
             
             <div class="card-body">
@@ -634,12 +791,17 @@
             </div>
         </div>
         
+        <!-- Warnings Section -->
+        <h2 class="section-title">
+            <i class="fas fa-exclamation-triangle"></i> Potential Concerns
+        </h2>
+        
         <!-- Allergen Warnings -->
         {% if result.allergen_warning and result.allergen_warning|length > 0 %}
         <div class="card mb-3">
             <div class="card-header">
                 <div class="card-icon">
-                    <i class="fas fa-exclamation-triangle"></i>
+                    <i class="fas fa-allergies"></i>
                 </div>
                 <h2 class="card-title">Allergen Warnings</h2>
             </div>
@@ -648,7 +810,7 @@
                 <div class="allergen-container">
                     {% for allergen in result.allergen_warning %}
                         <span class="allergen-item">
-                            <i class="fas fa-allergies"></i> {{ allergen }}
+                            <i class="fas fa-exclamation-circle"></i> {{ allergen }}
                         </span>
                     {% endfor %}
                 </div>
@@ -663,7 +825,7 @@
                 <div class="card-icon">
                     <i class="fas fa-radiation"></i>
                 </div>
-                <h2 class="card-title">Potentially Harmful</h2>
+                <h2 class="card-title">Potentially Harmful Ingredients</h2>
             </div>
             
             <div class="card-body">
@@ -682,15 +844,20 @@
         </div>
         {% endif %}
         
+        <!-- Ingredients Section -->
+        <h2 class="section-title">
+            <i class="fas fa-flask"></i> Ingredient Analysis
+        </h2>
+        
         <!-- Two-column layout for ingredients -->
         <div class="grid-2-col mb-3">
             <!-- Ingredient Breakdown -->
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon">
-                        <i class="fas fa-flask"></i>
+                        <i class="fas fa-search"></i>
                     </div>
-                    <h2 class="card-title">Ingredient Breakdown</h2>
+                    <h2 class="card-title">Detailed Ingredient Breakdown</h2>
                 </div>
                 
                 <div class="card-body">
@@ -719,7 +886,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon">
-                        <i class="fas fa-list"></i>
+                        <i class="fas fa-list-ul"></i>
                     </div>
                     <h2 class="card-title">Simplified Ingredients</h2>
                 </div>
@@ -740,14 +907,18 @@
             {% endif %}
         </div>
         
-        <!-- Recommendations -->
+        <!-- Recommendations Section -->
+        <h2 class="section-title">
+            <i class="fas fa-lightbulb"></i> Recommendations
+        </h2>
+        
         {% if result.recommendations %}
         <div class="card mb-3">
             <div class="card-header">
                 <div class="card-icon">
-                    <i class="fas fa-lightbulb"></i>
+                    <i class="fas fa-comment-medical"></i>
                 </div>
-                <h2 class="card-title">Recommendations</h2>
+                <h2 class="card-title">Expert Recommendations</h2>
             </div>
             
             <div class="card-body">
@@ -770,10 +941,13 @@
         
         <!-- Nutritional Highlights -->
         {% if result.nutritional_highlights %}
+        <h2 class="section-title">
+            <i class="fas fa-heartbeat"></i> Nutritional Information
+        </h2>
         <div class="card">
             <div class="card-header">
                 <div class="card-icon">
-                    <i class="fas fa-heartbeat"></i>
+                    <i class="fas fa-chart-line"></i>
                 </div>
                 <h2 class="card-title">Nutritional Highlights</h2>
             </div>
@@ -796,6 +970,12 @@
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
                 }, 50 * index);
+            });
+            
+            // Add hover effects to all interactive elements
+            const interactiveElements = document.querySelectorAll('.card, .diet-item, .allergen-item, .warning-item, .recommendation-section, .ingredient-card');
+            interactiveElements.forEach(el => {
+                el.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
             });
         });
     </script>
