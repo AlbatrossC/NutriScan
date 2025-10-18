@@ -1,356 +1,119 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-from werkzeug.utils import secure_filename
-from PIL import Image, ImageEnhance, ImageFilter
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import os
-import logging
-from dotenv import load_dotenv
 import json
-from groq import Groq
-import requests
-from io import BytesIO
+from google import genai
+from google.genai import types
+from src.instructions import SYSTEM_INSTRUCTION, RESPONSE_SCHEMA
+from src.logs import db_logger
 
-load_dotenv()
-
-# Initialize Flask app
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
-# Configuration
-app.config.update({
-    'SECRET_KEY': os.environ.get('SECRET_KEY'),
-    'GROQ_API_KEY': os.environ.get('GROQ_API_KEY'),
-    'OCR_API_KEY': os.environ.get('OCR_API_KEY'),
-    'OCR_API_URL': 'https://api.ocr.space/parse/image',
-    'MAX_CONTENT_LENGTH': 16 * 1024 * 1024,
-    'ALLOWED_EXTENSIONS': {'png', 'jpg', 'jpeg', 'gif', 'webp'},
-    'TEMPLATES_AUTO_RELOAD': True,
-})
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-# Initialize Groq client
-client = Groq(api_key=app.config['GROQ_API_KEY'])
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
-def enhance_image_for_ocr(img):
-    """Enhance image quality for better OCR results"""
+def analyze_with_gemini(extracted_text):
     try:
-        logger.info("Enhancing image for OCR...")
-        # Convert to grayscale
-        img = img.convert('L')
-        # Increase contrast
-        img = ImageEnhance.Contrast(img).enhance(2.0)
-        # Adjust brightness
-        img = ImageEnhance.Brightness(img).enhance(1.2)
-        # Apply filters
-        img = img.filter(ImageFilter.MedianFilter(size=3))
-        img = img.filter(ImageFilter.SHARPEN)
-        return img
-    except Exception as e:
-        logger.error(f"Image enhancement failed: {e}")
-        raise
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            error_msg = "API key not configured"
+            db_logger.log_analysis(extracted_text, error_type=error_msg)
+            return {"error": error_msg}
 
-def extract_text_with_ocr(image_data):
-    """Extract text using OCR.space API with enhanced image processing"""
-    try:
-        logger.info("Starting OCR process...")
-        
-        # Enhance the image first
-        img = Image.open(BytesIO(image_data))
-        enhanced_img = enhance_image_for_ocr(img)
-        
-        # Save enhanced image to BytesIO
-        img_byte_arr = BytesIO()
-        enhanced_img.save(img_byte_arr, format='PNG')
-        img_byte_arr.seek(0)
-        
-        logger.info("Sending request to OCR.space API...")
-        response = requests.post(
-            app.config['OCR_API_URL'],
-            files={'file': ('enhanced.png', img_byte_arr, 'image/png')},
-            data={
-                'apikey': app.config['OCR_API_KEY'],
-                'language': 'eng',
-                'isOverlayRequired': False,
-                'scale': True,
-                'OCREngine': 2
-            }
-        )
-        
-        logger.info(f"OCR API response status: {response.status_code}")
-        result = response.json()
-        
-        if response.status_code != 200 or not result.get('ParsedResults'):
-            error = result.get('ErrorMessage', 'OCR failed')
-            logger.error(f"OCR error: {error}")
-            raise RuntimeError(f"OCR failed: {error}")
-            
-        extracted_text = result['ParsedResults'][0]['ParsedText']
-        logger.info(f"Extracted Text: {extracted_text}")
-        
-        return extracted_text.strip()
-    except Exception as e:
-        logger.error(f"OCR process failed: {str(e)}")
-        raise RuntimeError(f"Failed to extract text: {str(e)}")
-
-def analyze_with_groq(text):
-    """Analyze extracted text with Groq API"""
-    if not text.strip():
-        logger.error("Empty text provided for analysis")
-        raise ValueError("No text provided for analysis")
-
-    response_schema = {
-        "type": "object",
-        "properties": {
-            "safety_rating": {
-                "type": "object",
-                "properties": {
-                    "score": {
-                        "type": "number",
-                        "description": "Safety score from 0-10 based on ingredient analysis",
-                        "minimum": 0,
-                        "maximum": 10
-                    },
-                    "summary": {
-                        "type": "string",
-                        "description": "Detailed explanation of safety rating",
-                        "maxLength": 600
-                    }
-                },
-                "required": ["score", "summary"]
-            },
-            "quick_overview": {
-                "type": "string",
-                "description": "Comprehensive product analysis with key highlights",
-                "maxLength": 1000
-            },
-            "diet_suitability": {
-                "type": "object",
-                "properties": {
-                    "vegan": {"type": "string", "enum": ["Yes", "No", "Maybe"]},
-                    "vegetarian": {"type": "string", "enum": ["Yes", "No", "Maybe"]},
-                    "keto": {"type": "string", "enum": ["Yes", "No", "Maybe"]},
-                    "diabetic_friendly": {"type": "string", "enum": ["Yes", "No", "Maybe"]},
-                    "gluten_free": {"type": "string", "enum": ["Yes", "No", "Maybe"]},
-                    "details": {
-                        "type": "string",
-                        "description": "Additional diet-specific notes",
-                        "maxLength": 500
-                    }
-                },
-                "required": ["vegan", "vegetarian", "keto", "diabetic_friendly", "gluten_free"]
-            },
-            "allergen_warning": {
-                "type": "array",
-                "description": "List of major allergens detected",
-                "items": {
-                    "type": "string",
-                    "maxLength": 100
-                }
-            },
-            "harmful_ingredients": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": "string", "maxLength": 100},
-                        "concern": {"type": "string", "maxLength": 400},
-                        "severity": {"type": "string", "enum": ["Low", "Medium", "High"]}
-                    },
-                    "required": ["name", "concern", "severity"]
-                }
-            },
-            "ingredient_breakdown": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "ingredient": {"type": "string", "maxLength": 100},
-                        "purpose": {"type": "string", "maxLength": 300},
-                        "safety_note": {"type": "string", "maxLength": 200}
-                    },
-                    "required": ["ingredient", "purpose"]
-                }
-            },
-            "clean_ingredient_list": {
-                "type": "array",
-                "description": "Simplified ingredient list for display",
-                "items": {
-                    "type": "string",
-                    "maxLength": 100
-                }
-            },
-            "recommendations": {
-                "type": "object",
-                "properties": {
-                    "healthier_alternatives": {
-                        "type": "string",
-                        "description": "Suggested healthier product alternatives",
-                        "maxLength": 500
-                    },
-                    "consumption_tips": {
-                        "type": "string",
-                        "description": "Recommendations for healthier consumption",
-                        "maxLength": 500
-                    }
-                }
-            },
-            "nutritional_highlights": {
-                "type": "string",
-                "description": "Key nutritional facts and their implications",
-                "maxLength": 800
-            },
-            "sugar_content": {
-                "type": "object",
-                "description": "Analysis of sugar content",
-                "properties": {
-                    "percentage": {
-                        "type": "number",
-                        "description": "Estimated sugar content as a percentage of the product (0-100)",
-                        "minimum": 0,
-                        "maximum": 100
-                    },
-                    "description": {
-                        "type": "string",
-                        "description": "2-line summary of sugar level (e.g., too high/low, safe to consume or not)",
-                        "maxLength": 300
-                    }
-                },
-                "required": ["percentage", "description"]
-            }
-        },
-        "required": [
-            "safety_rating",
-            "quick_overview",
-            "diet_suitability",
-            "allergen_warning",
-            "harmful_ingredients",
-            "ingredient_breakdown",
-            "sugar_content"
+        client = genai.Client(api_key=api_key)
+        model = "gemini-2.0-flash-lite"
+        contents = [
+            types.Content(
+                role="user",
+                parts=[
+                    types.Part.from_text(text=extracted_text),
+                ],
+            ),
         ]
-    }
 
-    system_instruction = f"""
-    You are a certified food safety and nutrition expert. You'll be given a text block extracted from a packaged food label. Your task is to analyze this text and return a JSON object conforming strictly to this schema:
-
-    {json.dumps(response_schema, indent=2)}
-
-    Important Guidelines:
-    1. Return only a valid JSON object with no markdown or explanations.
-    2. The sugar_content field must always be included, even if the sugar is not directly mentioned.
-       a. If the percentage is not explicitly available in the text, you must intelligently estimate it based on ingredients and general product knowledge.
-       b. If necessary, imagine what a similar product's sugar level would be or search from common nutritional datasets.
-       c. Value must be a number (int or float), representing percentage out of 100.
-       d. The description should summarize in 2 lines whether the sugar content is too high or too low, and whether it's recommended to consume or avoid.
-    3. If this is not a food product, respond with: {{ "error": "Wrong image uploaded. Please upload a ingredients image" }}
-    4. If unable to analyze for any reason, respond with: {{ "error": "Unable to analyze" }}
-    5. Avoid assumptions outside common food safety knowledge. Be factual and concise.
-
-    Provide only the final structured JSON object in your response.
-    """
-
-    try:
-        logger.info("Sending request to Groq API...")
-        logger.debug(f"Request text: {text[:200]}...")
-
-        completion = client.chat.completions.create(
-            model="llama3-70b-8192",
-            messages=[
-                {"role": "system", "content": system_instruction},
-                {"role": "user", "content": text}
-            ],
-            temperature=0.6,
-            max_tokens=4096,
-            top_p=0.95,
-            response_format={"type": "json_object"}
+        generate_content_config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=RESPONSE_SCHEMA,
+            system_instruction=[types.Part.from_text(text=SYSTEM_INSTRUCTION)],
         )
 
-        response_text = completion.choices[0].message.content
-        logger.info("Received response from Groq API")
-        logger.debug(f"Raw response: {response_text}")
+        # Collect the streaming response
+        response_text = ""
+        for chunk in client.models.generate_content_stream(
+            model=model,
+            contents=contents,
+            config=generate_content_config,
+        ):
+            response_text += chunk.text
 
-        try:
-            response_data = json.loads(response_text)
-            if not isinstance(response_data, dict):
-                raise ValueError("Response is not a JSON object")
-            return response_data
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON response: {e}")
-            logger.error(f"Response content: {response_text}")
-            raise RuntimeError("Invalid JSON response from API")
-        except ValueError as e:
-            logger.error(f"Invalid response format: {e}")
-            logger.error(f"Response content: {response_text}")
-            raise RuntimeError("Invalid response format from API")
+        # Parse JSON response
+        result = json.loads(response_text)
+
+        # Log successful analysis
+        db_logger.log_analysis(extracted_text, output_text=result)
+        return result
+
+    except json.JSONDecodeError as e:
+        error_msg = "Invalid response format from AI"
+        db_logger.log_analysis(extracted_text, error_type=f"JSONDecodeError: {str(e)}")
+        return {"error": error_msg}
 
     except Exception as e:
-        logger.error(f"Groq API error: {str(e)}")
-        raise RuntimeError(f"Failed to analyze ingredients: {str(e)}")
+        error_msg = f"Analysis failed: {str(e)}"
+        db_logger.log_analysis(extracted_text, error_type=str(e))
+        return {"error": error_msg}
 
 
-@app.route('/', methods=['GET', 'POST'])
-def upload_file():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
+@app.route("/")
+def index():
+    return render_template("index.html")
 
-        file = request.files['file']
 
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
+@app.route("/analyze", methods=["POST"])
+def analyze():
+    try:
+        data = request.get_json()
+        extracted_text = data.get("text", "")
+        image_data = data.get("image", "")
 
-        if file and allowed_file(file.filename):
-            try:
-                logger.info(f"Processing file: {file.filename}")
-                file_data = file.read()
-                
-                # OCR text extraction
-                extracted_text = extract_text_with_ocr(file_data)
-                logger.info(f"Extracted text length: {len(extracted_text)}")
-                
-                if not extracted_text.strip():
-                    flash('No text could be extracted from the image. Please try another image.')
-                    return redirect(request.url)
-                
-                # Groq analysis
-                analysis_result = analyze_with_groq(extracted_text)
-                if 'error' in analysis_result:
-                    flash(f"Analysis error: {analysis_result['error']}")
-                    return redirect(request.url)
-                
-                session['analysis_result'] = analysis_result
-                return redirect(url_for('show_result'))
-                
-            except RuntimeError as e:
-                flash(f"Processing failed: {str(e)}")
-                return redirect(request.url)
-            except Exception as e:
-                logger.exception("Unexpected error during processing")
-                flash('An unexpected error occurred. Please try again.')
-                return redirect(request.url)
-        else:
-            flash('Allowed file types are png, jpg, jpeg, gif, webp')
-            return redirect(request.url)
+        if not extracted_text:
+            return jsonify({"error": "No text provided"}), 400
 
-    return render_template('upload.html')
+        # Analyze with Gemini
+        result = analyze_with_gemini(extracted_text)
 
-@app.route('/result')
-def show_result():
-    result = session.get('analysis_result')
-    if not result:
-        flash('No analysis result found. Please upload an image first.')
-        return redirect(url_for('upload_file'))
+        # Check if there's an error in the result
+        if "error" in result:
+            return jsonify(result), 400
 
-    return render_template('result.html', result=result)
+        # Store the result and image in session
+        session['analysisResult'] = result
+        if image_data:
+            session['imageUrl'] = image_data
 
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=True, host="0.0.0.0", port=port)
+        return jsonify(result), 200
+
+    except Exception as e:
+        db_logger.log_analysis("", error_type=f"Server error: {str(e)}")
+        return jsonify({"error": "Server error occurred"}), 500
+
+
+@app.route("/result")
+def result():
+    # Get the analysis result from session
+    result_data = session.get('analysisResult')
+    if not result_data:
+        return redirect(url_for('index'))
+
+    # Get the image URL if stored
+    image_url = session.get('imageUrl', '')
+
+    return render_template("result.html", result=result_data, image_url=image_url)
+
+
+@app.route("/clear-session")
+def clear_session():
+    session.clear()
+    return redirect(url_for('index'))
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
