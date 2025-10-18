@@ -1,8 +1,6 @@
 Flask
-Werkzeug
-Pillow
-pytesseract
+google-genai
+psycopg2-binary
 python-dotenv
-groq
-gunicorn
-requests
+pytz
+Werkzeug
