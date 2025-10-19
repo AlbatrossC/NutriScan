@@ -7,7 +7,7 @@ from src.instructions import SYSTEM_INSTRUCTION, RESPONSE_SCHEMA
 from src.logs import db_logger
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "flask-local-secret-key")
 
 
 def analyze_with_gemini(extracted_text):
